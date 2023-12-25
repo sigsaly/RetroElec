@@ -86,12 +86,14 @@ uint8_t tmidi_buff[MIDI_BUF_SIZE];
 
 void u_putchar(uint8_t tx_data)
 {
-	if(huart1.gState == HAL_UART_STATE_READY)
+	//if(huart1.gState == HAL_UART_STATE_READY)
+	//{
+	//	HAL_UART_Transmit_IT(&huart1, &tx_data, 1);
+	//}
+	//else
 	{
-		HAL_UART_Transmit_IT(&huart1, &tx_data, 1);
-	}else{
-		tx_buff[tx1_push_pos] = tx_data;
-		if(tx_push_pos >= BUF_SIZE - 1)
+		tx_buff[tx_push_pos] = tx_data;
+		if(tx_push_pos >= U_BUF_SIZE - 1)
 			tx_push_pos = 0;
 		else
 			tx_push_pos++;
@@ -123,7 +125,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			rx_push_pos++;
 		HAL_UART_Receive_IT(&huart1, &rx_data, 1);
 
-	}else if(huart->Instance == USART2){
+	}
+	else if(huart->Instance == USART2){
 		rmidi_buff [rmidi_push_pos] = rmidi_data;
 		if(rmidi_push_pos >= MIDI_BUF_SIZE - 1)
 			rmidi_push_pos = 0;
@@ -139,6 +142,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void uart_proc(void)
 {
+	uint8_t midi_data[3];
+	static int midi_index = 0;
 	while(rmidi_push_pos != rmidi_pop_pos)
 	{
 		uint8_t ch = rmidi_buff[rmidi_pop_pos];
@@ -146,7 +151,13 @@ void uart_proc(void)
 			rmidi_pop_pos = 0;
 		else
 			rmidi_pop_pos++;
-		u_printf("%x ", ch);
+
+		if(ch & 0x80){
+			u_printf("status: %02x\n", ch);
+		}else{
+			u_printf("data: %02x\n", ch);
+		}
+
 	}
 
 	if(tmidi_push_pos != tmidi_pop_pos)
@@ -170,7 +181,7 @@ void uart_proc(void)
 			rx_pop_pos = 0;
 		else
 			rx_pop_pos++;
-		u_put_char(ch);
+		u_putchar(ch);
 	}
 
 	if(tx_push_pos != tx_pop_pos)
@@ -218,7 +229,8 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
 
-  u_printf("\nSTM32 starts...\n");
+
+  u_printf("\nSTM32 starts...\r\n");
   HAL_UART_Receive_IT(&huart1, &rx_data, 1);
   HAL_UART_Receive_IT(&huart2, &rmidi_data, 1);
 
@@ -317,7 +329,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 32800; //31250;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
