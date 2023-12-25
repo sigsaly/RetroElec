@@ -142,7 +142,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void uart_proc(void)
 {
-	uint8_t midi_data[3];
+	static uint8_t midi_data[3];
 	static int midi_index = 0;
 	while(rmidi_push_pos != rmidi_pop_pos)
 	{
@@ -153,9 +153,22 @@ void uart_proc(void)
 			rmidi_pop_pos++;
 
 		if(ch & 0x80){
-			u_printf("status: %02x\n", ch);
+			midi_index = 0;
+			midi_data[midi_index] = ch;
+			midi_index++;
+			//u_printf("status: %02x\n", ch);
 		}else{
-			u_printf("data: %02x\n", ch);
+			if(midi_index <= 2){
+				midi_data[midi_index] = ch;
+				midi_index++;
+				if(midi_index == 3){
+					u_printf("midi: %02x %02x %02x\n", midi_data[0], midi_data[1], midi_data[2]);
+					midi_index = 0;
+				}
+			}else{
+				u_printf("Error: midi_index: %d\n", midi_index);
+			}
+			//u_printf("data: %02x\n", ch);
 		}
 
 	}
