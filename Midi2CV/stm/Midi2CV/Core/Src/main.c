@@ -17,8 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
-#include <stdarg.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -42,6 +40,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
@@ -54,6 +54,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -86,14 +87,12 @@ uint8_t tmidi_buff[MIDI_BUF_SIZE];
 
 void u_putchar(uint8_t tx_data)
 {
-	//if(huart1.gState == HAL_UART_STATE_READY)
-	//{
-	//	HAL_UART_Transmit_IT(&huart1, &tx_data, 1);
-	//}
-	//else
+	if(huart1.gState == HAL_UART_STATE_READY)
 	{
-		tx_buff[tx_push_pos] = tx_data;
-		if(tx_push_pos >= U_BUF_SIZE - 1)
+		HAL_UART_Transmit_IT(&huart1, &tx_data, 1);
+	}else{
+		tx_buff[tx1_push_pos] = tx_data;
+		if(tx_push_pos >= BUF_SIZE - 1)
 			tx_push_pos = 0;
 		else
 			tx_push_pos++;
@@ -125,8 +124,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			rx_push_pos++;
 		HAL_UART_Receive_IT(&huart1, &rx_data, 1);
 
-	}
-	else if(huart->Instance == USART2){
+	}else if(huart->Instance == USART2){
 		rmidi_buff [rmidi_push_pos] = rmidi_data;
 		if(rmidi_push_pos >= MIDI_BUF_SIZE - 1)
 			rmidi_push_pos = 0;
@@ -142,8 +140,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void uart_proc(void)
 {
-	static uint8_t midi_data[3];
-	static int midi_index = 0;
 	while(rmidi_push_pos != rmidi_pop_pos)
 	{
 		uint8_t ch = rmidi_buff[rmidi_pop_pos];
@@ -151,26 +147,7 @@ void uart_proc(void)
 			rmidi_pop_pos = 0;
 		else
 			rmidi_pop_pos++;
-
-		if(ch & 0x80){
-			midi_index = 0;
-			midi_data[midi_index] = ch;
-			midi_index++;
-			//u_printf("status: %02x\n", ch);
-		}else{
-			if(midi_index <= 2){
-				midi_data[midi_index] = ch;
-				midi_index++;
-				if(midi_index == 3){
-					u_printf("midi: %02x %02x %02x\n", midi_data[0], midi_data[1], midi_data[2]);
-					midi_index = 0;
-				}
-			}else{
-				u_printf("Error: midi_index: %d\n", midi_index);
-			}
-			//u_printf("data: %02x\n", ch);
-		}
-
+		u_printf("%x ", ch);
 	}
 
 	if(tmidi_push_pos != tmidi_pop_pos)
@@ -194,7 +171,7 @@ void uart_proc(void)
 			rx_pop_pos = 0;
 		else
 			rx_pop_pos++;
-		u_putchar(ch);
+		u_put_char(ch);
 	}
 
 	if(tx_push_pos != tx_pop_pos)
@@ -232,26 +209,44 @@ void send_midi(uint8_t data)
   */
 int main(void)
 {
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
   /* Configure the system clock */
   SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
 
-
-  u_printf("\nSTM32 starts...\r\n");
-  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
-  HAL_UART_Receive_IT(&huart2, &rmidi_data, 1);
+  /* USER CODE END 2 */
 
   /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uart_proc();
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
   }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -291,6 +286,40 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -342,7 +371,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 32800; //31250;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -372,6 +401,7 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
