@@ -1205,8 +1205,8 @@
     (property "Datasheet" "~" (at 95.25 53.34 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 7b433ec9-87bb-4378-a054-3ae6b7e72f02))
     (pin "2" (uuid c603bb90-b54d-4569-bb28-f179fce57fcd))
+    (pin "1" (uuid 7b433ec9-87bb-4378-a054-3ae6b7e72f02))
     (instances
       (project "MidiCv"
         (path "/0e81e7e9-28eb-4e3c-9e5d-03b0357b6be8"
@@ -1231,8 +1231,8 @@
     (property "Datasheet" "~" (at 50.8 55.88 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 470cb6ba-e1b6-4afa-985f-eee2b3b887da))
     (pin "2" (uuid 8b2416e8-2668-4ff4-89b8-0eef4ae23d7c))
+    (pin "1" (uuid 470cb6ba-e1b6-4afa-985f-eee2b3b887da))
     (instances
       (project "MidiCv"
         (path "/0e81e7e9-28eb-4e3c-9e5d-03b0357b6be8"
@@ -1345,8 +1345,8 @@
     (property "Sim.Pins" "1=K 2=A" (at 58.42 64.77 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 4fd3d13a-b063-48fe-9017-750b3db867a5))
     (pin "2" (uuid f897c037-92be-43f9-99c9-78a49d99d8e9))
+    (pin "1" (uuid 4fd3d13a-b063-48fe-9017-750b3db867a5))
     (instances
       (project "MidiCv"
         (path "/0e81e7e9-28eb-4e3c-9e5d-03b0357b6be8"
@@ -1371,11 +1371,11 @@
     (property "Datasheet" "" (at 34.29 53.34 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 37468a09-e413-46ec-9b58-e38e4c693f29))
     (pin "2" (uuid edeb534b-25b1-44ad-aef0-fafb18399fec))
-    (pin "3" (uuid e39309d6-db2b-42f1-bb8d-90f3f83c58b3))
-    (pin "4" (uuid a9680188-4f5f-4678-a793-b1a50cd5ec92))
     (pin "5" (uuid cf56b7ae-05fd-4d16-ba71-836f161927a8))
+    (pin "4" (uuid a9680188-4f5f-4678-a793-b1a50cd5ec92))
+    (pin "3" (uuid e39309d6-db2b-42f1-bb8d-90f3f83c58b3))
+    (pin "1" (uuid 37468a09-e413-46ec-9b58-e38e4c693f29))
     (instances
       (project "MidiCv"
         (path "/0e81e7e9-28eb-4e3c-9e5d-03b0357b6be8"
@@ -1464,8 +1464,8 @@
     (property "Datasheet" "~" (at 33.02 81.28 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid ef5de43e-e1a7-4738-b1b4-e22bffd8f2cb))
     (pin "2" (uuid bac44f16-ca1f-4f67-a952-27fe8b72bd02))
+    (pin "1" (uuid ef5de43e-e1a7-4738-b1b4-e22bffd8f2cb))
     (instances
       (project "MidiCv"
         (path "/0e81e7e9-28eb-4e3c-9e5d-03b0357b6be8"
@@ -1490,8 +1490,8 @@
     (property "Datasheet" "~" (at 52.07 95.25 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 78efcf8b-7d04-4050-8366-5cd59e34a9f4))
     (pin "2" (uuid a95e0f9e-5378-4551-a4a5-67ce1e03c157))
+    (pin "1" (uuid 78efcf8b-7d04-4050-8366-5cd59e34a9f4))
     (instances
       (project "MidiCv"
         (path "/0e81e7e9-28eb-4e3c-9e5d-03b0357b6be8"
@@ -1541,11 +1541,11 @@
     (property "Datasheet" "" (at 35.56 100.33 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid f4357bb8-c169-4a18-95e9-035586815b52))
     (pin "2" (uuid e56f3855-a68c-4fb8-a958-13cd780f6e29))
-    (pin "3" (uuid 2f0015b8-d515-4d6f-b914-82c3b43918b9))
-    (pin "4" (uuid fc879c66-3d44-40e2-9792-b2916eae757a))
     (pin "5" (uuid 2a5b3f8e-d3d5-4359-85dc-27bc4a9d0395))
+    (pin "3" (uuid 2f0015b8-d515-4d6f-b914-82c3b43918b9))
+    (pin "1" (uuid f4357bb8-c169-4a18-95e9-035586815b52))
+    (pin "4" (uuid fc879c66-3d44-40e2-9792-b2916eae757a))
     (instances
       (project "MidiCv"
         (path "/0e81e7e9-28eb-4e3c-9e5d-03b0357b6be8"
