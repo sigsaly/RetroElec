@@ -162,7 +162,7 @@
       )
     )
     (symbol "MCP4725_DAC_BD_1_1"
-      (text "MCP4725DAC" (at 0 11.43 0)
+      (text "MCP4725_DAC_BD" (at 0 11.43 0)
         (effects (font (size 1.27 1.27)))
       )
       (pin power_in line (at -6.35 -6.35 0) (length 2.54)
@@ -649,7 +649,7 @@
     )
   )
   (symbol "TXS018E_BD" (in_bom yes) (on_board yes)
-    (property "Reference" "U" (at -5.08 13.97 0)
+    (property "Reference" "U" (at -6.35 13.97 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "" (at -2.54 5.08 0)
@@ -668,6 +668,9 @@
       )
     )
     (symbol "TXS018E_BD_1_1"
+      (text "TXS018E_BD\n" (at 2.54 13.97 0)
+        (effects (font (size 1.27 1.27)))
+      )
       (pin bidirectional line (at 8.89 -10.16 180) (length 2.54)
         (name "A1" (effects (font (size 1.27 1.27))))
         (number "" (effects (font (size 1.27 1.27))))

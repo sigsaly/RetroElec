@@ -17,6 +17,8 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
+#include <stdarg.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -87,10 +89,11 @@ uint8_t tmidi_buff[MIDI_BUF_SIZE];
 
 void u_putchar(uint8_t tx_data)
 {
-	if(huart1.gState == HAL_UART_STATE_READY)
-	{
-		HAL_UART_Transmit_IT(&huart1, &tx_data, 1);
-	}else{
+	//if(huart1.gState == HAL_UART_STATE_READY)
+	//{
+	//	HAL_UART_Transmit_IT(&huart1, &tx_data, 1);
+	//}else
+  {
 		tx_buff[tx1_push_pos] = tx_data;
 		if(tx_push_pos >= BUF_SIZE - 1)
 			tx_push_pos = 0;
@@ -140,6 +143,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void uart_proc(void)
 {
+	static uint8_t midi_data[3];
+	static int midi_index = 0;
 	while(rmidi_push_pos != rmidi_pop_pos)
 	{
 		uint8_t ch = rmidi_buff[rmidi_pop_pos];
@@ -147,7 +152,26 @@ void uart_proc(void)
 			rmidi_pop_pos = 0;
 		else
 			rmidi_pop_pos++;
-		u_printf("%x ", ch);
+
+		if(ch & 0x80){
+			midi_index = 0;
+			midi_data[midi_index] = ch;
+			midi_index++;
+			//u_printf("status: %02x\n", ch);
+		}else{
+			if(midi_index <= 2){
+				midi_data[midi_index] = ch;
+				midi_index++;
+				if(midi_index == 3){
+					u_printf("midi: %02x %02x %02x\n", midi_data[0], midi_data[1], midi_data[2]);
+					midi_index = 0;
+				}
+			}else{
+				u_printf("Error: midi_index: %d\n", midi_index);
+			}
+			//u_printf("data: %02x\n", ch);
+		}
+
 	}
 
 	if(tmidi_push_pos != tmidi_pop_pos)
@@ -171,7 +195,7 @@ void uart_proc(void)
 			rx_pop_pos = 0;
 		else
 			rx_pop_pos++;
-		u_put_char(ch);
+		u_putchar(ch);
 	}
 
 	if(tx_push_pos != tx_pop_pos)
@@ -233,9 +257,11 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_I2C1_Init();
-  /* USER CODE BEGIN 2 */
 
+  /* USER CODE BEGIN 2 */
+  u_printf("\nSTM32 starts...\r\n");
+  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+  HAL_UART_Receive_IT(&huart2, &rmidi_data, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -243,7 +269,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  uart_proc();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
