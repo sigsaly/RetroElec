@@ -17,13 +17,12 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
-#include <stdarg.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <stdarg.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +64,7 @@ static void MX_I2C1_Init(void);
 /* USER CODE BEGIN 0 */
 #define U_BUF_SIZE (64)
 #define MIDI_BUF_SIZE (64)
+static const uint8_t MCP4725_ADDR = 0x61 << 1; // Use 8-bit address
 
 uint8_t rx_push_pos = 0;
 uint8_t rx_pop_pos = 0;
@@ -89,17 +89,12 @@ uint8_t tmidi_buff[MIDI_BUF_SIZE];
 
 void u_putchar(uint8_t tx_data)
 {
-	//if(huart1.gState == HAL_UART_STATE_READY)
-	//{
-	//	HAL_UART_Transmit_IT(&huart1, &tx_data, 1);
-	//}else
-  {
-		tx_buff[tx1_push_pos] = tx_data;
-		if(tx_push_pos >= BUF_SIZE - 1)
-			tx_push_pos = 0;
-		else
-			tx_push_pos++;
-	}
+
+	tx_buff[tx_push_pos] = tx_data;
+	if(tx_push_pos >= U_BUF_SIZE - 1)
+		tx_push_pos = 0;
+	else
+		tx_push_pos++;
 }
 
 int __io_putchar(int ch)
@@ -164,6 +159,10 @@ void uart_proc(void)
 				midi_index++;
 				if(midi_index == 3){
 					u_printf("midi: %02x %02x %02x\n", midi_data[0], midi_data[1], midi_data[2]);
+					HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_SET);
+					HAL_I2C_Master_Transmit(&hi2c1, MCP4725_ADDR, midi_data, 3, 1000); //Sending in Blocking mode
+					HAL_Delay(100);
+					HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
 					midi_index = 0;
 				}
 			}else{
@@ -257,7 +256,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   u_printf("\nSTM32 starts...\r\n");
   HAL_UART_Receive_IT(&huart1, &rx_data, 1);
@@ -268,8 +267,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 	  uart_proc();
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -397,7 +397,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 31250;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -421,6 +421,7 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
@@ -428,6 +429,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : A0_SEL_Pin */
+  GPIO_InitStruct.Pin = A0_SEL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(A0_SEL_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
