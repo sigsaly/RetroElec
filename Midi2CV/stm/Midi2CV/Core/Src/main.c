@@ -62,6 +62,9 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#define NOTE_ON		(0x90)
+#define NOTE_OFF	(0x80)
+
 #define U_BUF_SIZE (64)
 #define MIDI_BUF_SIZE (64)
 static const uint8_t MCP4725_ADDR = 0x61 << 1; // Use 8-bit address
@@ -136,6 +139,24 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 }
 
+void set_CV(uint8_t *data){
+	uint8_t msg = data[0] & 0xf0;
+	uint8_t channel = data[0] & 0xf;
+	uint16_t note = 4095*((data[1] & 0x7f)/127);
+
+	uint8_t buf[3];
+	buf[0] = 0x40; // normal mode
+	buf[1] = (uint8_t)((note & 0xff0) >> 8);
+	buf[2] = (uint8_t)((note & 0xf) << 4);
+	if(msg == NOTE_ON){
+		HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_SET);
+		HAL_I2C_Master_Transmit(&hi2c1, MCP4725_ADDR, buf, 3, 1000); //Sending in Blocking mode
+		HAL_Delay(100);
+	} else if(msg == NOTE_OFF){
+		HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+	}
+}
+
 void uart_proc(void)
 {
 	static uint8_t midi_data[3];
@@ -159,10 +180,7 @@ void uart_proc(void)
 				midi_index++;
 				if(midi_index == 3){
 					u_printf("midi: %02x %02x %02x\n", midi_data[0], midi_data[1], midi_data[2]);
-					HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_SET);
-					HAL_I2C_Master_Transmit(&hi2c1, MCP4725_ADDR, midi_data, 3, 1000); //Sending in Blocking mode
-					HAL_Delay(100);
-					HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+					set_CV(midi_data);
 					midi_index = 0;
 				}
 			}else{
