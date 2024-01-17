@@ -142,16 +142,25 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 void set_CV(uint8_t *data){
 	uint8_t msg = data[0] & 0xf0;
 	uint8_t channel = data[0] & 0xf;
-	uint16_t note = 4095*((data[1] & 0x7f)/127);
+	uint16_t note = ((data[1] & 0x7f)*4095)/127;
+	uint8_t velocity = data[2];
 
 	uint8_t buf[3];
 	buf[0] = 0x40; // normal mode
-	buf[1] = (uint8_t)((note & 0xff0) >> 8);
+	buf[1] = (uint8_t)((note & 0xff0) >> 4);
 	buf[2] = (uint8_t)((note & 0xf) << 4);
+
+	if(channel > 0) return;
+
 	if(msg == NOTE_ON){
-		HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_SET);
-		HAL_I2C_Master_Transmit(&hi2c1, MCP4725_ADDR, buf, 3, 1000); //Sending in Blocking mode
-		HAL_Delay(100);
+		if(velocity > 0){
+			u_printf("note: %d, %02x %02x %02x\n", note, buf[0], buf[1], buf[2]);
+			HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_SET);
+			HAL_I2C_Master_Transmit(&hi2c1, MCP4725_ADDR, buf, 3, 1000); //Sending in Blocking mode
+			HAL_Delay(100);
+		} else{ // Yamaha sends vel0 instead of note off
+			HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+		}
 	} else if(msg == NOTE_OFF){
 		HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
 	}
@@ -279,6 +288,7 @@ int main(void)
   u_printf("\nSTM32 starts...\r\n");
   HAL_UART_Receive_IT(&huart1, &rx_data, 1);
   HAL_UART_Receive_IT(&huart2, &rmidi_data, 1);
+  HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
