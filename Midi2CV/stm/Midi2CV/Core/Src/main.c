@@ -37,6 +37,15 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define SX_SEL_GPIO_Port GPIOB
+#define S1_SEL_Pin GPIO_PIN_5
+#define S2_SEL_Pin GPIO_PIN_4
+#define S3_SEL_Pin GPIO_PIN_3
+#define S4_SEL_Pin GPIO_PIN_15
+#define S5_SEL_Pin GPIO_PIN_14
+#define S6_SEL_Pin GPIO_PIN_13
+#define S7_SEL_Pin GPIO_PIN_12
+#define S8_SEL_Pin GPIO_PIN_1
 
 /* USER CODE END PM */
 
@@ -62,6 +71,7 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 #define NOTE_ON		(0x90)
 #define NOTE_OFF	(0x80)
 
@@ -88,6 +98,24 @@ uint8_t tmidi_push_pos = 0;
 uint8_t tmidi_pop_pos = 0;
 uint8_t tmidi_data;
 uint8_t tmidi_buff[MIDI_BUF_SIZE];
+
+/* Config #1
+ *
+ * S1 - channel 0
+ * S2 - channel 1
+ * S3 - channel 2
+ * S4 - channel 3
+ * S5 - channel 4
+ * S6 - channel 5
+ * S7 - channel 6
+ * S8 - channel 7
+ */
+//uint8_t config[][] =[[S0_SEL_Pin,S0_SEL_Pin,S0_SEL_Pin,S0_SEL_Pin,S0_SEL_Pin,S0_SEL_Pin,S0_SEL_Pin,S0_SEL_Pin]];
+// a0 to a5 (21 to 93) to (0 to 4095)
+#define MIN_NOTE 21
+#define MAX_NOTE 93
+
+#define TARGET_PIN S8_SEL_Pin
 
 
 void u_putchar(uint8_t tx_data)
@@ -142,27 +170,32 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 void set_CV(uint8_t *data){
 	uint8_t msg = data[0] & 0xf0;
 	uint8_t channel = data[0] & 0xf;
-	uint16_t note = ((data[1] & 0x7f)*4095)/127;
+	uint8_t midi_note = data[1] & 0x7f;
+
+	if ((midi_note < MIN_NOTE) || (midi_note > MAX_NOTE))
+		return;
+	//uint16_t note = ((data[1] & 0x7f)*4095)/127;
+	uint16_t value = (midi_note - MIN_NOTE) * 4095 /(MAX_NOTE - MIN_NOTE);
 	uint8_t velocity = data[2];
 
 	uint8_t buf[3];
 	buf[0] = 0x40; // normal mode
-	buf[1] = (uint8_t)((note & 0xff0) >> 4);
-	buf[2] = (uint8_t)((note & 0xf) << 4);
+	buf[1] = (uint8_t)((value & 0xff0) >> 4);
+	buf[2] = (uint8_t)((value & 0xf) << 4);
 
 	if(channel > 0) return;
 
 	if(msg == NOTE_ON){
 		if(velocity > 0){
-			u_printf("note: %d, %02x %02x %02x\n", note, buf[0], buf[1], buf[2]);
-			HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_SET);
+			u_printf("note: %d, %02x %02x %02x\n", value, buf[0], buf[1], buf[2]);
+			HAL_GPIO_WritePin(SX_SEL_GPIO_Port, TARGET_PIN, GPIO_PIN_SET);
 			HAL_I2C_Master_Transmit(&hi2c1, MCP4725_ADDR, buf, 3, 1000); //Sending in Blocking mode
 			HAL_Delay(100);
 		} else{ // Yamaha sends vel0 instead of note off
-			HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(SX_SEL_GPIO_Port, TARGET_PIN, GPIO_PIN_RESET);
 		}
 	} else if(msg == NOTE_OFF){
-		HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(SX_SEL_GPIO_Port, TARGET_PIN, GPIO_PIN_RESET);
 	}
 }
 
@@ -288,7 +321,13 @@ int main(void)
   u_printf("\nSTM32 starts...\r\n");
   HAL_UART_Receive_IT(&huart1, &rx_data, 1);
   HAL_UART_Receive_IT(&huart2, &rmidi_data, 1);
-  HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SX_SEL_GPIO_Port, S1_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SX_SEL_GPIO_Port, S2_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SX_SEL_GPIO_Port, S3_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SX_SEL_GPIO_Port, S4_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SX_SEL_GPIO_Port, S5_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SX_SEL_GPIO_Port, S6_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SX_SEL_GPIO_Port, S7_SEL_Pin, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -459,14 +498,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(A0_SEL_GPIO_Port, A0_SEL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, S8_SEL_Pin|S7_SEL_Pin|S6_SEL_Pin|S5_SEL_Pin
+                          |S4_SEL_Pin|S3_SEL_Pin|S2_SEL_Pin|S1_SEL_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : A0_SEL_Pin */
-  GPIO_InitStruct.Pin = A0_SEL_Pin;
+  /*Configure GPIO pins : S8_SEL_Pin S7_SEL_Pin S6_SEL_Pin S5_SEL_Pin
+                           S4_SEL_Pin S3_SEL_Pin S2_SEL_Pin S1_SEL_Pin */
+  GPIO_InitStruct.Pin = S8_SEL_Pin|S7_SEL_Pin|S6_SEL_Pin|S5_SEL_Pin
+                          |S4_SEL_Pin|S3_SEL_Pin|S2_SEL_Pin|S1_SEL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(A0_SEL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
